@@ -1,5 +1,5 @@
 #
-# The Qubes OS Project, http://www.qubes-os.org
+# The Qubes OS Project, https://www.qubes-os.org
 #
 # Copyright (C) 2013  Joanna Rutkowska <joanna@invisiblethingslab.com>
 #
@@ -19,11 +19,12 @@
 #
 #
 
-build:
-	make manpages -C doc
+PANDOC=pandoc -s -f markdown -t man
+NAME := convert-pdf
 
-install-vm:
-	make install -C doc
+install-vm: build
+	install -d $(DESTDIR)/usr/share/man/man1
+	install -D qvm-$(NAME).1.gz $(DESTDIR)/usr/share/man/man1/
 	python3 setup.py install -O1 $(PYTHON_PREFIX_ARG) --root $(DESTDIR)
 	install -d $(DESTDIR)/etc/qubes-rpc
 	ln -s ../../usr/lib/qubes/qpdf-convert-server $(DESTDIR)/etc/qubes-rpc/qubes.PdfConvert
@@ -39,6 +40,15 @@ install-dom0:
 	rm -f $(DESTDIR)/usr/bin/qvm-convert-pdf
 	rm -f $(DESTDIR)/usr/lib/qubes/qpdf-convert-server
 
+qvm-$(NAME).1: README.md
+	$(PANDOC) $< > $@
+
+qvm-$(NAME).1.gz: qvm-$(NAME).1
+	gzip -f $<
+
+build: qvm-$(NAME).1.gz
+
 clean:
 	rm -rf debian/changelog.*
 	rm -rf pkgs
+	rm -f qvm-$(NAME).1.gz
